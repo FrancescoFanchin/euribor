@@ -1,0 +1,9 @@
+
+DagId: "dag_extract_euribor_data"
+Schedule: "'0 0 31 12 *'"
+Query: "'sql/insert_data.sql'"
+SeriesKey: "'M.U2.EUR.RT.MM.EURIBOR1MD_.HSTA'"
+StartPeriod: "2020"
+EndPeriod: "2023"
+FileType: "'csv'"
+Email: "my-email"
