@@ -23,19 +23,22 @@ connection_id = "postgres_db"
 
 
 def fetch_euribor_data(ti, **kwargs):
+    '''
+    Get euribor data by calling API
+    ''' 
     series_key = serieskeytoreplace
     format_type = formattoreplace
     year = kwargs["execution_date"].strftime("%Y")
 
     url = f"https://sdw-wsrest.ecb.europa.eu/service/data/FM/{series_key}?format={format_type}data&startPeriod={year}&endPeriod={year}"
-    logging.info(url)
+    
+    # try api call
     try:
         response = request("GET", url)
         response.raise_for_status()
 
     except HTTPError as httperr:
         raise AirflowException(response.text) from httperr
-    logging.info(str(response.content))
 
     output = response.content
 
@@ -49,15 +52,20 @@ def fetch_euribor_data(ti, **kwargs):
 
 
 def render_query(ti, **kwargs):
+    '''
+    Prepare query for inserting values to postgres table
+    '''
     query_path = "/opt/airflow/dags/sql/insert_data.sql"
     base_query = open(query_path).read()
     input_path=ti.xcom_pull(key='input_path', task_ids='fetch_euribor_data')
     df = pd.read_csv(input_path, header=None)
-    print(df)
+
+    # complete INSERT INTO statement
     lines = [f"('{df.iloc[i,0]}',{df.iloc[i,1]}),\n" for i in df.index]
     lines[-1] = lines[-1][:-2] + ";\n"
     final_query = base_query + "".join(lines)
     logging.info(final_query)
+    
     return final_query
 
 
